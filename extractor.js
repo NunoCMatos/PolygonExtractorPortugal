@@ -1,7 +1,7 @@
 const readline = require('readline');
 const https = require('https');
 const fs = require('fs');
-const { parse } = require('path');
+const simplify = require('simplify-js');
 
 // Function to fetch JSON data from the provided link
 function fetchMunicipioData(name) {
@@ -40,7 +40,18 @@ function promptForMunicipioName() {
 }
 
 function switchCoordinates(coordinates) {
-    return coordinates.map(coord => [coord[1], coord[0]]);
+    return coordinates.map(coord => ({x: coord[1], y: coord[0]}));
+}
+
+function formatCoordinates(coordinates) {
+    return coordinates.map(coord => [coord.x, coord.y]);
+}
+
+function simplifyCoordinates(coordinates) {
+
+    coordinates = simplify(coordinates, 0.001, true);
+
+    return formatCoordinates(coordinates);
 }
 
 async function parseName(name) {
@@ -85,11 +96,12 @@ async function fetchDataAndWrite(name) {
                     const nome = freguesia.properties.Freguesia;
                     const coordinates = freguesia.geometry.coordinates;
                     const switchedCoordinates = switchCoordinates(coordinates[0]);
+                    const simplifiedCoordinates = simplifyCoordinates(switchedCoordinates);
 
                     // Write switched coordinates to new JSON file
-                    fs.writeFile(`${folderName}/${nome}_polygon.json`, JSON.stringify({ geometry: { coordinates: switchedCoordinates } }, null, 4), (err) => {
+                    fs.writeFile(`${folderName}/${nome}_polygon.json`, JSON.stringify({ name: nome, path: simplifiedCoordinates }, null, 4), (err) => {
                         if (!err) {
-                            // console.log(`Switched coordinates saved to ${folderName}/${nome}_polygon.json`);
+                            console.log(`Switched coordinates saved to ${folderName}/${nome}_polygon.json`);
                         } else {
                             console.error('Error writing file:', err);
                         }
