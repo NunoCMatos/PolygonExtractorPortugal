@@ -160,6 +160,24 @@ async function fetchDataAndWrite(name) {
                     });
                 });
             }
+            
+            // Check if the municipio has a "geojsons" property
+            if (geojsons && geojsons.municipio) {
+                const municipio = geojsons.municipio;
+                const coordinates = municipio.geometry.coordinates;
+                const switchedCoordinates = switchCoordinates(coordinates[0]);
+                const simplifiedCoordinates = simplifyCoordinates(switchedCoordinates);
+
+                // Write switched coordinates to new JSON file
+                fs.writeFile(`${folderName}/Municipio_polygon.json`, JSON.stringify({ name: folderName, path: simplifiedCoordinates }, null, 4), (err) => {
+                    if (!err) {
+                        console.log(`Switched coordinates saved to ${folderName}/Municipio_polygon.json`);
+                    } else {
+                        console.error('Error writing file:', err);
+                    }
+                });
+            }
+            
 
             rl.close(); // Close the readline interface when done
         }
